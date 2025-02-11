@@ -136,6 +136,7 @@ const AddTimesheetForm = () => {
     { value: "C", label: "Cuti" },
     { value: "S", label: "Sakit" },
     { value: "I", label: "Izin" },
+    { value: "L", label: "Libur / Cuti Bersama" },
   ];
 
   const handleDeleteActivity = (index) => {
@@ -339,19 +340,25 @@ const AddTimesheetForm = () => {
             <div className="space-y-4">
               {activities.map((activity, index) => {
                 const isDisabled = watch(`activities[${index}].type`) !== "H";
+                const isDisabledLibur = !["H", "L"].includes(
+                  watch(`activities[${index}].type`)
+                );
 
                 return (
                   <div
                     key={index}
-                    className="rounded border p-4 dark:border-gray-700"
+                    className="relative rounded border p-4 dark:border-gray-700"
                   >
-                    <button
-                      type="button"
-                      onClick={() => handleDeleteActivity(index)}
-                      className="top-25 absolute right-10 text-red-500 hover:text-gray-500"
-                    >
-                      <Trash2 size={20} />
-                    </button>
+                    <div className="absolute -right-0 -top-0 flex h-12 w-12 items-center justify-center rounded-bl-full bg-red-500">
+                      <button
+                        type="button"
+                        onClick={() => handleDeleteActivity(index)}
+                        className="text-white hover:text-gray-200"
+                      >
+                        <Trash2 size={18} />
+                      </button>
+                    </div>
+
                     {/* Type Dropdown */}
                     <div className="mb-4 mt-4">
                       <label className="block text-sm font-medium text-gray-700">
@@ -521,12 +528,12 @@ const AddTimesheetForm = () => {
                             {...field}
                             type="text"
                             className={`w-full rounded border p-2 dark:border-gray-700 dark:bg-navy-800 dark:text-white dark:placeholder-gray-400 ${
-                              isDisabled
+                              isDisabledLibur
                                 ? "cursor-not-allowed bg-gray-100 dark:bg-navy-800 dark:text-gray-400"
                                 : ""
                             }`}
                             placeholder="Enter Activities"
-                            disabled={isDisabled}
+                            disabled={isDisabledLibur}
                           />
                         )}
                       />

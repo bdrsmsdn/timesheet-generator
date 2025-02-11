@@ -54,7 +54,13 @@ const EditTimesheet = () => {
     { value: "C", label: "Cuti" },
     { value: "S", label: "Sakit" },
     { value: "I", label: "Izin" },
+    { value: "L", label: "Libur / Cuti Bersama" },
   ];
+
+  const typeMapping = {
+    LS: "Sabtu",
+    LM: "Minggu",
+  };
 
   // Fetch timesheet data for editing
   useEffect(() => {
@@ -165,6 +171,7 @@ const EditTimesheet = () => {
       });
 
       // Redirect or show success message
+      toast.success("Timesheet editted successfully");
       navigate("/user/data-tables");
     } catch (error) {
       console.error("Error updating timesheet:", error);
@@ -381,6 +388,12 @@ const EditTimesheet = () => {
             <div className="space-y-4">
               {watch("activities").map((activity, index) => {
                 const isDisabled = watch(`activities[${index}].type`) !== "H";
+                const isDisabledLibur = !["H", "L"].includes(
+                  watch(`activities[${index}].type`)
+                );
+
+                const selectedType = watch(`activities[${index}].type`);
+                const isDisabledLSLM = ["LS", "LM"].includes(selectedType);
 
                 return (
                   <div
@@ -394,7 +407,6 @@ const EditTimesheet = () => {
                     >
                       <Trash2 size={20} />
                     </button>
-
                     {/* Type Dropdown */}
                     <div className="mb-4 mt-4">
                       <label className="block text-sm font-medium text-gray-700">
@@ -408,9 +420,17 @@ const EditTimesheet = () => {
                             {...field}
                             options={typeOptions}
                             placeholder="Select Type"
-                            value={typeOptions.find(
-                              (option) => option.value === field.value
-                            )}
+                            value={
+                              typeMapping[selectedType]
+                                ? {
+                                    label: typeMapping[selectedType],
+                                    value: selectedType,
+                                  }
+                                : typeOptions.find(
+                                    (option) => option.value === field.value
+                                  )
+                            }
+                            isDisabled={isDisabledLSLM}
                             onChange={(selectedOption) =>
                               field.onChange(selectedOption?.value)
                             }
@@ -418,7 +438,6 @@ const EditTimesheet = () => {
                         )}
                       />
                     </div>
-
                     {/* Date, Check In, Check Out section */}
                     <div className="mb-4">
                       <div className="flex flex-col space-y-4 sm:flex-row sm:items-center sm:space-x-4 sm:space-y-0">
@@ -447,7 +466,12 @@ const EditTimesheet = () => {
                                 }}
                                 dateFormat="yyyy-MM-dd"
                                 placeholderText="Select Date"
-                                className="w-full rounded border p-2 dark:border-gray-700 dark:bg-navy-800"
+                                className={`dark:bg-navy-800, w-full rounded border p-2 dark:border-gray-700 ${
+                                  isDisabledLSLM
+                                    ? "cursor-not-allowed bg-gray-200 text-gray-500 dark:bg-gray-500"
+                                    : ""
+                                }`}
+                                disabled={isDisabledLSLM}
                               />
                             )}
                           />
@@ -500,7 +524,6 @@ const EditTimesheet = () => {
                         </div>
                       </div>
                     </div>
-
                     {/* Project Section */}
                     <div className="mb-4">
                       <label className="block text-sm font-medium text-gray-700 dark:text-white">
@@ -550,7 +573,6 @@ const EditTimesheet = () => {
                         </div>
                       </div>
                     </div>
-
                     {/* Activities */}
                     <div>
                       <label className="block text-sm font-medium text-gray-700 dark:text-white">
@@ -564,12 +586,12 @@ const EditTimesheet = () => {
                             {...field}
                             type="text"
                             className={`w-full rounded border p-2 dark:border-gray-700 dark:bg-navy-800 dark:text-white dark:placeholder-gray-400 ${
-                              isDisabled
+                              isDisabledLibur
                                 ? "cursor-not-allowed bg-gray-100 dark:bg-navy-800 dark:text-gray-400"
                                 : ""
                             }`}
                             placeholder="Enter Activities"
-                            disabled={isDisabled}
+                            disabled={isDisabledLibur}
                           />
                         )}
                       />

@@ -54,6 +54,21 @@ const TimesheetView = () => {
     ),
   };
 
+  const typeMapping = {
+    LS: "Libur",
+    LM: "Libur",
+    H: "Hadir",
+    C: "Cuti",
+    S: "Sakit",
+    I: "Izin",
+    L: "Libur",
+  };
+
+  const typeLibur = {
+    LS: "Sabtu",
+    LM: "Minggu",
+  };
+
   if (loading) {
     return (
       <Card extra="w-full h-full px-6 pb-6">
@@ -168,7 +183,7 @@ const TimesheetView = () => {
                         Type
                       </label>
                       <p className="mt-1 text-navy-700 dark:text-white">
-                        {activity.type || "N/A"}
+                        {typeMapping[activity.type] || "N/A"}
                       </p>
                     </div>
                     <div>
@@ -213,7 +228,9 @@ const TimesheetView = () => {
                         Activities
                       </label>
                       <p className="mt-1 text-navy-700 dark:text-white">
-                        {activity.activities || "N/A"}
+                        {activity.type === "LS" || activity.type === "LM"
+                          ? typeLibur[activity.type]
+                          : activity.activities || "N/A"}
                       </p>
                     </div>
                   </div>
