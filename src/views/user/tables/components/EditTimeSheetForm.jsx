@@ -7,10 +7,11 @@ import Select from "react-select";
 import { toast } from "react-toastify";
 import { Tab } from "@headlessui/react";
 import Card from "components/card";
-import { ArrowRight } from "lucide-react";
+import { ArrowLeft, ArrowRight, Trash2 } from "lucide-react";
 import { useNavigate, useParams } from "react-router-dom";
 import CustomSelect from "./CustomSelect";
 import { PulseLoader } from "react-spinners";
+import { Swal } from "sweetalert2/dist/sweetalert2";
 
 const EditTimesheet = () => {
   const { id } = useParams();
@@ -37,12 +38,11 @@ const EditTimesheet = () => {
     },
   });
 
-  // State for form management
   const [activeTab, setActiveTab] = useState(0);
+  const [activities, setActivities] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Simulated data (replace with actual data fetching logic)
   const [divisions, setDivisions] = useState([]);
   const [departments, setDepartments] = useState([]);
   const [teams, setTeams] = useState([]);
@@ -60,7 +60,6 @@ const EditTimesheet = () => {
   useEffect(() => {
     const fetchTimesheetData = async () => {
       try {
-        // Replace with actual API call
         const token = localStorage.getItem("token");
 
         const response = await fetch(
@@ -75,8 +74,6 @@ const EditTimesheet = () => {
         );
 
         const data = await response.json();
-
-        console.log(data);
 
         // Populate form with existing data
         reset({
@@ -98,7 +95,7 @@ const EditTimesheet = () => {
           })),
         });
 
-        // Pastikan dropdown otomatis mengisi
+        // Dropdown
         setValue("divisi", data.divisi._id);
         setValue("department", data.department._id);
         setValue("team", data.team._id);
@@ -136,6 +133,8 @@ const EditTimesheet = () => {
     fetchInitialData();
   }, [id, reset, setValue]);
 
+  useEffect(() => {}, [activities]);
+
   // Function to add a new activity
   const addActivity = () => {
     const currentActivities = watch("activities");
@@ -157,8 +156,7 @@ const EditTimesheet = () => {
   const onSubmit = async (formData) => {
     setIsSubmitting(true);
     try {
-      // Replace with actual API call to update timesheet
-      await fetch(`/api/timesheets/${id}`, {
+      await fetch(`${process.env.REACT_APP_URL_API}/api/timesheet/${id}`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
@@ -167,11 +165,46 @@ const EditTimesheet = () => {
       });
 
       // Redirect or show success message
-      navigate("/user/timesheets");
+      navigate("/user/data-tables");
     } catch (error) {
       console.error("Error updating timesheet:", error);
       setIsSubmitting(false);
     }
+  };
+
+  const handleDeleteActivity = (index) => {
+    const activity = activities[index];
+
+    if (activity && Object.values(activity).some((value) => value)) {
+      Swal.fire({
+        title: "Yakin ingin menghapus?",
+        text: "Data yang sudah diisi akan hilang.",
+        icon: "warning",
+        showCancelButton: true,
+        confirmButtonColor: "#d33",
+        cancelButtonColor: "#3085d6",
+        confirmButtonText: "Ya, hapus!",
+        cancelButtonText: "Batal",
+      }).then((result) => {
+        if (result.isConfirmed) {
+          removeActivity(index);
+        }
+      });
+    } else {
+      removeActivity(index);
+    }
+  };
+
+  const removeActivity = (index) => {
+    const updatedActivities = activities.filter((_, i) => i !== index);
+
+    setValue("activities", updatedActivities, {
+      shouldValidate: true,
+      shouldDirty: true,
+    });
+    setActivities(updatedActivities); // Tambahkan ini
+
+    console.log("After delete:", updatedActivities);
   };
 
   // Render loading state
@@ -186,8 +219,16 @@ const EditTimesheet = () => {
   return (
     <Card extra={"w-full h-full px-6 pb-6 sm:overflow-x-auto"}>
       <div className="mb-8 mt-6 flex items-center justify-between">
-        <div className="text-xl font-bold text-navy-700 dark:text-white">
-          Edit Timesheet
+        <div className="flex items-center gap-4">
+          <button
+            onClick={() => navigate("/user/data-tables")}
+            className="text-gray-600 hover:text-blue-600"
+          >
+            <ArrowLeft className="h-6 w-6" />
+          </button>
+          <h2 className="text-xl font-bold text-navy-700 dark:text-white">
+            Edit Timesheet
+          </h2>
         </div>
       </div>
       <Tab.Group selectedIndex={activeTab} onChange={setActiveTab}>
@@ -346,8 +387,16 @@ const EditTimesheet = () => {
                     key={index}
                     className="rounded border p-4 dark:border-gray-700"
                   >
+                    <button
+                      type="button"
+                      onClick={() => handleDeleteActivity(index)}
+                      className="top-25 absolute right-10 text-red-500 hover:text-gray-500"
+                    >
+                      <Trash2 size={20} />
+                    </button>
+
                     {/* Type Dropdown */}
-                    <div className="mb-4">
+                    <div className="mb-4 mt-4">
                       <label className="block text-sm font-medium text-gray-700">
                         Type
                       </label>

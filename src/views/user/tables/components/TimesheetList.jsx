@@ -9,7 +9,7 @@ import {
 } from "@tanstack/react-table";
 import axios from "axios";
 import { Download, Plus, Eye, Edit, Trash } from "lucide-react";
-import { ToastContainer, toast } from "react-toastify";
+import { toast } from "react-toastify";
 import Card from "components/card";
 import { useNavigate } from "react-router-dom";
 import Swal from "sweetalert2/dist/sweetalert2.js";
@@ -23,6 +23,7 @@ const TimesheetList = () => {
   const [data, setData] = useState([]);
   const [sorting, setSorting] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [totalPages, setTotalPages] = useState(1);
   const [pagination, setPagination] = useState({
     pageIndex: 0,
     pageSize: 10,
@@ -141,7 +142,7 @@ const TimesheetList = () => {
           </button>
         </div>
       ),
-      size: 200, // Lebar kolom 200px
+      size: 200,
     }),
   ];
 
@@ -157,9 +158,11 @@ const TimesheetList = () => {
     getCoreRowModel: getCoreRowModel(),
     getSortedRowModel: getSortedRowModel(),
     getPaginationRowModel: getPaginationRowModel(),
+    manualPagination: true,
+    pageCount: totalPages,
   });
 
-  const fetchData = async () => {
+  const fetchData = async (pageNumber) => {
     try {
       setLoading(true);
 
@@ -167,7 +170,9 @@ const TimesheetList = () => {
       const token = localStorage.getItem("token");
 
       const response = await axios.get(
-        `${process.env.REACT_APP_URL_API}/api/timesheet/history`,
+        `${process.env.REACT_APP_URL_API}/api/timesheet/history/?page=${
+          pageNumber + 1
+        }`,
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -175,6 +180,7 @@ const TimesheetList = () => {
         }
       );
       setData(response.data.timesheets);
+      setTotalPages(response.data.pagination.totalPages || 1);
     } catch (error) {
       toast.error("Error fetching timesheet, please refresh this browser.");
     } finally {
@@ -183,8 +189,8 @@ const TimesheetList = () => {
   };
 
   useEffect(() => {
-    fetchData();
-  }, []);
+    fetchData(pagination.pageIndex);
+  }, [pagination.pageIndex]);
 
   // Handler untuk tombol View
   const handleView = (rowData) => {
@@ -213,7 +219,7 @@ const TimesheetList = () => {
 
       if (!result.isConfirmed) return;
 
-      setLoading(true); // Set loading sebelum proses
+      setLoading(true);
 
       // Request DELETE ke API
       await axios.delete(
@@ -225,9 +231,8 @@ const TimesheetList = () => {
         }
       );
 
-      await fetchData(); // Ambil data terbaru setelah delete
+      await fetchData();
 
-      // Tampilkan pesan sukses
       toast.success("Timesheet has been deleted.");
     } catch (error) {
       toast.error("Error deleting timesheet, please try again later.");
@@ -421,24 +426,36 @@ const TimesheetList = () => {
                 )}
               </div>
 
-              {/* Pagination Controls - Responsive */}
+              {/* Pagination */}
               <div className="mt-4 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                 <div className="text-sm text-gray-600">
-                  Showing {table.getRowModel().rows.length} of {data.length}{" "}
-                  entries
+                  Showing {data.length} entries
                 </div>
-                <div className="flex gap-2">
+                <div className="flex items-center gap-2">
                   <button
                     className="flex-1 rounded-md bg-blue-600 px-4 py-2 text-white disabled:opacity-50 sm:flex-none"
-                    onClick={() => table.previousPage()}
-                    disabled={!table.getCanPreviousPage()}
+                    onClick={() =>
+                      setPagination((prev) => ({
+                        ...prev,
+                        pageIndex: Math.max(prev.pageIndex - 1, 0),
+                      }))
+                    }
+                    disabled={pagination.pageIndex === 0}
                   >
                     Previous
                   </button>
+                  <span className="text-sm text-gray-600">
+                    Page {pagination.pageIndex + 1} of {totalPages}
+                  </span>
                   <button
                     className="flex-1 rounded-md bg-blue-600 px-4 py-2 text-white disabled:opacity-50 sm:flex-none"
-                    onClick={() => table.nextPage()}
-                    disabled={!table.getCanNextPage()}
+                    onClick={() =>
+                      setPagination((prev) => ({
+                        ...prev,
+                        pageIndex: Math.min(prev.pageIndex + 1, totalPages - 1),
+                      }))
+                    }
+                    disabled={pagination.pageIndex >= totalPages - 1}
                   >
                     Next
                   </button>
