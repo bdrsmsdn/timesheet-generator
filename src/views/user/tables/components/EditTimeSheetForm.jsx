@@ -11,7 +11,7 @@ import { ArrowLeft, ArrowRight, Trash2 } from "lucide-react";
 import { useNavigate, useParams } from "react-router-dom";
 import CustomSelect from "./CustomSelect";
 import { PulseLoader } from "react-spinners";
-import { Swal } from "sweetalert2/dist/sweetalert2";
+import Swal from "sweetalert2/dist/sweetalert2";
 
 const EditTimesheet = () => {
   const { id } = useParams();
@@ -180,7 +180,8 @@ const EditTimesheet = () => {
   };
 
   const handleDeleteActivity = (index) => {
-    const activity = activities[index];
+    const currentActivities = watch("activities");
+    const activity = currentActivities[index];
 
     if (activity && Object.values(activity).some((value) => value)) {
       Swal.fire({
@@ -203,15 +204,13 @@ const EditTimesheet = () => {
   };
 
   const removeActivity = (index) => {
-    const updatedActivities = activities.filter((_, i) => i !== index);
+    const currentActivities = watch("activities");
+    const updatedActivities = currentActivities.filter((_, i) => i !== index);
 
     setValue("activities", updatedActivities, {
       shouldValidate: true,
       shouldDirty: true,
     });
-    setActivities(updatedActivities); // Tambahkan ini
-
-    console.log("After delete:", updatedActivities);
   };
 
   // Render loading state
@@ -398,15 +397,17 @@ const EditTimesheet = () => {
                 return (
                   <div
                     key={index}
-                    className="rounded border p-4 dark:border-gray-700"
+                    className="relative rounded border p-4 dark:border-gray-700"
                   >
-                    <button
-                      type="button"
-                      onClick={() => handleDeleteActivity(index)}
-                      className="top-25 absolute right-10 text-red-500 hover:text-gray-500"
-                    >
-                      <Trash2 size={20} />
-                    </button>
+                    <div className="absolute -right-0 -top-0 flex h-12 w-12 items-center justify-center rounded-bl-full bg-red-500">
+                      <button
+                        type="button"
+                        onClick={() => handleDeleteActivity(index)}
+                        className="text-white hover:text-gray-200"
+                      >
+                        <Trash2 size={18} />
+                      </button>
+                    </div>
                     {/* Type Dropdown */}
                     <div className="mb-4 mt-4">
                       <label className="block text-sm font-medium text-gray-700">

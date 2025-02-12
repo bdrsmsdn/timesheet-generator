@@ -7,6 +7,7 @@ import DataTables from "views/admin/tables";
 
 // Auth Imports
 import SignIn from "views/auth/SignIn";
+import Register from "views/auth/Registration";
 
 // User Imports
 import MainDashboard from "views/user/default";
@@ -35,6 +36,7 @@ export const adminRoutes = [
     path: "default",
     icon: <MdHome className="h-6 w-6" />,
     component: <AdminDashboard />,
+    showInSidebar: true,
   },
   {
     name: "Timesheet Data",
@@ -42,6 +44,7 @@ export const adminRoutes = [
     icon: <MdBarChart className="h-6 w-6" />,
     path: "data-tables",
     component: <DataTables />,
+    showInSidebar: true,
   },
   {
     name: "Profile",
@@ -49,6 +52,7 @@ export const adminRoutes = [
     path: "profile",
     icon: <MdPerson className="h-6 w-6" />,
     component: <Profile />,
+    showInSidebar: false,
   },
 ];
 
@@ -60,6 +64,7 @@ export const userRoutes = [
     path: "default",
     icon: <MdHome className="h-6 w-6" />,
     component: <MainDashboard />,
+    showInSidebar: true,
   },
   {
     name: "Timesheet Data",
@@ -67,6 +72,7 @@ export const userRoutes = [
     icon: <MdBarChart className="h-6 w-6" />,
     path: "data-tables",
     component: <UserDataTables />,
+    showInSidebar: true,
   },
   {
     name: "Profile",
@@ -74,6 +80,7 @@ export const userRoutes = [
     path: "profile",
     icon: <MdPerson className="h-6 w-6" />,
     component: <UserProfile />,
+    showInSidebar: false,
   },
   {
     name: "Add Timesheet",
@@ -81,6 +88,7 @@ export const userRoutes = [
     path: "add-timesheet",
     icon: <MdAddTask className="h-6 w-6" />,
     component: <AddTimesheetForm />,
+    showInSidebar: false,
   },
   {
     name: "View Timesheet",
@@ -88,6 +96,7 @@ export const userRoutes = [
     path: "view-timesheet/:id",
     icon: <MdViewTimeline className="h-6 w-6" />,
     component: <TimesheetView />,
+    showInSidebar: false,
   },
   {
     name: "Edit Timesheet",
@@ -95,6 +104,7 @@ export const userRoutes = [
     path: "edit-timesheet/:id",
     icon: <MdEditNote className="h-6 w-6" />,
     component: <EditTimesheet />,
+    showInSidebar: false,
   },
 ];
 
@@ -106,6 +116,15 @@ export const authRoutes = [
     path: "sign-in",
     icon: <MdLock className="h-6 w-6" />,
     component: <SignIn />,
+    showInSidebar: false,
+  },
+  {
+    name: "Register",
+    layout: "/auth",
+    path: "register",
+    icon: <MdLock className="h-6 w-6" />,
+    component: <Register />,
+    showInSidebar: false,
   },
 ];
 

@@ -1,12 +1,24 @@
 import { Navigate, Outlet } from "react-router-dom";
 import { useAuth } from "./context/AuthContext";
+import { jwtDecode } from "jwt-decode";
 
 const ProtectedRoute = ({ allowedRoles }) => {
   const { role } = useAuth();
+  const token = localStorage.getItem("token");
 
-  console.log(role);
+  if (!token) {
+    return <Navigate to="/login" replace />;
+  }
 
-  if (!allowedRoles.includes(role)) {
+  let decoded;
+  try {
+    decoded = jwtDecode(token);
+  } catch (error) {
+    console.error("Invalid token:", error);
+    return <Navigate to="/login" replace />;
+  }
+
+  if (!allowedRoles.includes(decoded.role)) {
     return <Navigate to="/unauthorized" replace />;
   }
 

@@ -140,9 +140,17 @@ const AddTimesheetForm = () => {
   ];
 
   const handleDeleteActivity = (index) => {
-    const activity = activities[index];
+    const currentActivities = watch("activities") || [];
+    const activity = currentActivities[index];
 
-    if (activity && Object.values(activity).some((value) => value)) {
+    // Check if any field in the activity has data
+    const hasData =
+      activity &&
+      Object.values(activity).some(
+        (value) => value !== null && value !== undefined && value !== ""
+      );
+
+    if (hasData) {
       Swal.fire({
         title: "Yakin ingin menghapus?",
         text: "Data yang sudah diisi akan hilang.",
@@ -163,15 +171,14 @@ const AddTimesheetForm = () => {
   };
 
   const removeActivity = (index) => {
-    const updatedActivities = activities.filter((_, i) => i !== index);
+    const currentActivities = watch("activities") || [];
+    const updatedActivities = currentActivities.filter((_, i) => i !== index);
 
     setValue("activities", updatedActivities, {
       shouldValidate: true,
       shouldDirty: true,
     });
-    setActivities(updatedActivities); // Tambahkan ini
-
-    console.log("After delete:", updatedActivities);
+    setActivities(updatedActivities);
   };
 
   return (

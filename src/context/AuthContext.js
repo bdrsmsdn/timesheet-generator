@@ -3,16 +3,23 @@ import { createContext, useContext, useEffect, useState } from "react";
 const AuthContext = createContext();
 
 export const AuthProvider = ({ children }) => {
-  const [role, setRole] = useState(localStorage.getItem("role") || "guest");
+  const [role, setRole] = useState(null);
 
-  const login = (newRole) => {
-    localStorage.setItem("role", newRole);
-    setRole(newRole);
+  useEffect(() => {
+    const storedRole = localStorage.getItem("role");
+    if (storedRole) {
+      setRole(storedRole);
+    }
+  }, []);
+
+  const login = (userRole) => {
+    localStorage.setItem("role", userRole);
+    setRole(userRole);
   };
 
   const logout = () => {
     localStorage.removeItem("role");
-    setRole("guest");
+    setRole(null);
   };
 
   return (
