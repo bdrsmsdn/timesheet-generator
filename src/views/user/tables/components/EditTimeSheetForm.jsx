@@ -12,6 +12,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import CustomSelect from "./CustomSelect";
 import { PulseLoader } from "react-spinners";
 import Swal from "sweetalert2/dist/sweetalert2";
+import { MdSignLanguage } from "react-icons/md";
 
 const EditTimesheet = () => {
   const { id } = useParams();
@@ -161,20 +162,36 @@ const EditTimesheet = () => {
   // Submit handler
   const onSubmit = async (formData) => {
     setIsSubmitting(true);
+    const token = localStorage.getItem("token");
+
     try {
-      await fetch(`${process.env.REACT_APP_URL_API}/api/timesheet/${id}`, {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(formData),
-      });
+      const edit = await axios.put(
+        `${process.env.REACT_APP_URL_API}/api/timesheet/${id}`,
+        formData,
+        {
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      const msg = edit.data;
+      console.log(msg);
+
+      if (edit.status === 200) {
+        toast.success("Timesheet editted successfully");
+        navigate("/user/data-tables");
+      } else {
+        toast.error("Failed to update timesheet! " + msg);
+      }
 
       // Redirect or show success message
-      toast.success("Timesheet editted successfully");
-      navigate("/user/data-tables");
     } catch (error) {
       console.error("Error updating timesheet:", error);
+      toast.error("Failed to update timesheet! " + error.response.data.message);
+      setIsSubmitting(false);
+    } finally {
       setIsSubmitting(false);
     }
   };

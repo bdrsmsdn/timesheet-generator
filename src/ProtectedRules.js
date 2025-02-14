@@ -15,7 +15,7 @@ const ProtectedRoute = ({ allowedRoles }) => {
     decoded = jwtDecode(token);
   } catch (error) {
     console.error("Invalid token:", error);
-    return <Navigate to="/login" replace />;
+    return <Navigate to="/" replace />;
   }
 
   if (!allowedRoles.includes(decoded.role)) {
