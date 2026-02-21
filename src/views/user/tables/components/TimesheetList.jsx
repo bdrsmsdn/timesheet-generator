@@ -8,7 +8,7 @@ import {
   getPaginationRowModel,
 } from "@tanstack/react-table";
 import axios from "axios";
-import { Download, Plus, Eye, Edit, Trash } from "lucide-react";
+import { Download, Plus, Eye, Edit, Trash, FileText } from "lucide-react";
 import { toast } from "react-toastify";
 import Card from "components/card";
 import { useNavigate } from "react-router-dom";
@@ -133,12 +133,21 @@ const TimesheetList = () => {
           >
             <Trash className="h-4 w-4" />
           </button>
-          {/* Tombol Download */}
+          {/* Tombol Download Excel */}
           <button
+            title="Download Excel"
             className="flex items-center justify-center rounded-md bg-purple-500 p-2 text-white hover:bg-purple-600"
             onClick={() => handleDownload(info.row.original._id)}
           >
             <Download className="h-4 w-4" />
+          </button>
+          {/* Tombol Download PDF */}
+          <button
+            title="Download PDF"
+            className="flex items-center justify-center rounded-md bg-orange-500 p-2 text-white hover:bg-orange-600"
+            onClick={() => handleDownloadPDF(info.row.original._id)}
+          >
+            <FileText className="h-4 w-4" />
           </button>
         </div>
       ),
@@ -297,6 +306,60 @@ const TimesheetList = () => {
       });
     } catch (error) {
       toast.error("Error downloading timesheet, please try again later.");
+    }
+  };
+
+  // Handler untuk tombol Download PDF
+  const handleDownloadPDF = async (rowData) => {
+    try {
+      const token = localStorage.getItem("token");
+
+      const response = await axios.get(
+        `${process.env.REACT_APP_URL_API}/api/timesheet/download-pdf/${rowData}`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+          responseType: "blob",
+        }
+      );
+
+      const blob = new Blob([response.data], { type: "application/pdf" });
+      const url = window.URL.createObjectURL(blob);
+
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `Timesheet_${rowData}.pdf`;
+      document.body.appendChild(a);
+      a.click();
+
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+
+      setShowConfetti(true);
+
+      const randImage = getRandomImage();
+
+      Swal.fire({
+        title: "Download PDF Successful!🎉🦄",
+        text: "Thank you for downloading. If you find this helpful, consider supporting me by Scan QR above!😘",
+        imageUrl: qrCode,
+        imageWidth: 200,
+        imageHeight: 200,
+        imageAlt: "QR Code for Donation",
+        confirmButtonText: "Close",
+        didClose: () => {
+          setShowConfetti(false);
+        },
+        backdrop: `
+    rgba(0,0,123,0.4)
+    url(${randImage})
+    left top
+    no-repeat
+  `,
+      });
+    } catch (error) {
+      toast.error("Error downloading PDF, please try again later.");
     }
   };
 
