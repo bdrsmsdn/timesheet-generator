@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
+import { jwtDecode } from "jwt-decode";
 import { useForm, Controller } from "react-hook-form";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
@@ -39,8 +40,12 @@ const AddTimesheetForm = () => {
   useEffect(() => {
     const token = localStorage.getItem("token");
     if (token) {
-      const decodedToken = JSON.parse(atob(token.split(".")[1]));
-      setTokenData(decodedToken);
+      try {
+        const decodedToken = jwtDecode(token);
+        setTokenData(decodedToken);
+      } catch (e) {
+        // invalid token, leave tokenData as null
+      }
     }
   }, []);
 
@@ -82,8 +87,6 @@ const AddTimesheetForm = () => {
     fetchDropdownData();
   }, []);
 
-  useEffect(() => {}, [activities]);
-
   const addActivity = () => {
     setActivities([
       ...activities,
@@ -105,8 +108,6 @@ const AddTimesheetForm = () => {
         ...data,
         activities: data.activities.map(({ type, ...rest }) => rest), // Hapus field `type`
       };
-      console.log(filteredData);
-
       const token = localStorage.getItem("token");
 
       await axios.post(

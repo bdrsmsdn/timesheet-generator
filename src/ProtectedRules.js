@@ -14,11 +14,17 @@ const ProtectedRoute = ({ allowedRoles }) => {
   try {
     decoded = jwtDecode(token);
   } catch (error) {
-    console.error("Invalid token:", error);
     return <Navigate to="/" replace />;
   }
 
-  if (!allowedRoles.includes(decoded.role)) {
+  const isExpired = decoded.exp && decoded.exp * 1000 < Date.now();
+  if (isExpired) {
+    localStorage.removeItem("token");
+    localStorage.removeItem("role");
+    return <Navigate to="/auth/sign-in" replace />;
+  }
+
+  if (!decoded.role || !allowedRoles.includes(decoded.role)) {
     return <Navigate to="/unauthorized" replace />;
   }
 

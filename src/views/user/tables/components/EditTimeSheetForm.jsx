@@ -140,8 +140,6 @@ const EditTimesheet = () => {
     fetchInitialData();
   }, [id, reset, setValue]);
 
-  useEffect(() => {}, [activities]);
-
   // Function to add a new activity
   const addActivity = () => {
     const currentActivities = watch("activities");
@@ -177,7 +175,6 @@ const EditTimesheet = () => {
       );
 
       const msg = edit.data;
-      console.log(msg);
 
       if (edit.status === 200) {
         toast.success("Timesheet editted successfully");
