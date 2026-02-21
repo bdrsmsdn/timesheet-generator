@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo, useCallback } from "react";
 import axios from "axios";
 import { useForm, Controller } from "react-hook-form";
 import DatePicker from "react-datepicker";
@@ -13,6 +13,19 @@ import CustomSelect from "./CustomSelect";
 import { PulseLoader } from "react-spinners";
 import Swal from "sweetalert2/dist/sweetalert2";
 import { MdSignLanguage } from "react-icons/md";
+
+const typeOptions = [
+  { value: "H", label: "Hadir" },
+  { value: "C", label: "Cuti" },
+  { value: "S", label: "Sakit" },
+  { value: "I", label: "Izin" },
+  { value: "L", label: "Libur / Cuti Bersama" },
+];
+
+const typeMapping = {
+  LS: "Sabtu",
+  LM: "Minggu",
+};
 
 const EditTimesheet = () => {
   const { id } = useParams();
@@ -49,19 +62,22 @@ const EditTimesheet = () => {
   const [teams, setTeams] = useState([]);
   const [vendors, setVendors] = useState([]);
 
-  // Dropdown options
-  const typeOptions = [
-    { value: "H", label: "Hadir" },
-    { value: "C", label: "Cuti" },
-    { value: "S", label: "Sakit" },
-    { value: "I", label: "Izin" },
-    { value: "L", label: "Libur / Cuti Bersama" },
-  ];
-
-  const typeMapping = {
-    LS: "Sabtu",
-    LM: "Minggu",
-  };
+  const divisionOptions = useMemo(
+    () => divisions.map((d) => ({ value: d._id, label: d.name })),
+    [divisions]
+  );
+  const departmentOptions = useMemo(
+    () => departments.map((d) => ({ value: d._id, label: d.name })),
+    [departments]
+  );
+  const teamOptions = useMemo(
+    () => teams.map((t) => ({ value: t._id, label: t.name })),
+    [teams]
+  );
+  const vendorOptions = useMemo(
+    () => vendors.map((v) => ({ value: v._id, label: v.name })),
+    [vendors]
+  );
 
   // Fetch timesheet data for editing
   useEffect(() => {
@@ -140,10 +156,47 @@ const EditTimesheet = () => {
     fetchInitialData();
   }, [id, reset, setValue]);
 
-  useEffect(() => {}, [activities]);
+  const removeActivity = useCallback(
+    (index) => {
+      const currentActivities = watch("activities");
+      const updatedActivities = currentActivities.filter((_, i) => i !== index);
+      setValue("activities", updatedActivities, {
+        shouldValidate: true,
+        shouldDirty: true,
+      });
+    },
+    [watch, setValue]
+  );
+
+  const handleDeleteActivity = useCallback(
+    (index) => {
+      const currentActivities = watch("activities");
+      const activity = currentActivities[index];
+
+      if (activity && Object.values(activity).some((value) => value)) {
+        Swal.fire({
+          title: "Yakin ingin menghapus?",
+          text: "Data yang sudah diisi akan hilang.",
+          icon: "warning",
+          showCancelButton: true,
+          confirmButtonColor: "#d33",
+          cancelButtonColor: "#3085d6",
+          confirmButtonText: "Ya, hapus!",
+          cancelButtonText: "Batal",
+        }).then((result) => {
+          if (result.isConfirmed) {
+            removeActivity(index);
+          }
+        });
+      } else {
+        removeActivity(index);
+      }
+    },
+    [watch, removeActivity]
+  );
 
   // Function to add a new activity
-  const addActivity = () => {
+  const addActivity = useCallback(() => {
     const currentActivities = watch("activities");
     setValue("activities", [
       ...currentActivities,
@@ -157,7 +210,7 @@ const EditTimesheet = () => {
         activities: "",
       },
     ]);
-  };
+  }, [watch, setValue]);
 
   // Submit handler
   const onSubmit = async (formData) => {
@@ -177,7 +230,6 @@ const EditTimesheet = () => {
       );
 
       const msg = edit.data;
-      console.log(msg);
 
       if (edit.status === 200) {
         toast.success("Timesheet editted successfully");
@@ -194,40 +246,6 @@ const EditTimesheet = () => {
     } finally {
       setIsSubmitting(false);
     }
-  };
-
-  const handleDeleteActivity = (index) => {
-    const currentActivities = watch("activities");
-    const activity = currentActivities[index];
-
-    if (activity && Object.values(activity).some((value) => value)) {
-      Swal.fire({
-        title: "Yakin ingin menghapus?",
-        text: "Data yang sudah diisi akan hilang.",
-        icon: "warning",
-        showCancelButton: true,
-        confirmButtonColor: "#d33",
-        cancelButtonColor: "#3085d6",
-        confirmButtonText: "Ya, hapus!",
-        cancelButtonText: "Batal",
-      }).then((result) => {
-        if (result.isConfirmed) {
-          removeActivity(index);
-        }
-      });
-    } else {
-      removeActivity(index);
-    }
-  };
-
-  const removeActivity = (index) => {
-    const currentActivities = watch("activities");
-    const updatedActivities = currentActivities.filter((_, i) => i !== index);
-
-    setValue("activities", updatedActivities, {
-      shouldValidate: true,
-      shouldDirty: true,
-    });
   };
 
   // Render loading state
@@ -285,10 +303,7 @@ const EditTimesheet = () => {
                 </label>
                 <CustomSelect
                   name="divisi"
-                  options={divisions.map((d) => ({
-                    value: d._id,
-                    label: d.name,
-                  }))}
+                  options={divisionOptions}
                   isLoading={isLoading}
                   control={control}
                   defaultValue=""
@@ -307,10 +322,7 @@ const EditTimesheet = () => {
                 </label>
                 <CustomSelect
                   name="department"
-                  options={departments.map((d) => ({
-                    value: d._id,
-                    label: d.name,
-                  }))}
+                  options={departmentOptions}
                   isLoading={isLoading}
                   control={control}
                   defaultValue=""
@@ -329,7 +341,7 @@ const EditTimesheet = () => {
                 </label>
                 <CustomSelect
                   name="team"
-                  options={teams.map((t) => ({ value: t._id, label: t.name }))}
+                  options={teamOptions}
                   isLoading={isLoading}
                   control={control}
                   defaultValue=""
@@ -346,10 +358,7 @@ const EditTimesheet = () => {
                 </label>
                 <CustomSelect
                   name="vendor"
-                  options={vendors.map((v) => ({
-                    value: v._id,
-                    label: v.name,
-                  }))}
+                  options={vendorOptions}
                   isLoading={isLoading}
                   control={control}
                   defaultValue=""

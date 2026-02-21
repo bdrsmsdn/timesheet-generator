@@ -1,5 +1,6 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo, useCallback } from "react";
 import axios from "axios";
+import { jwtDecode } from "jwt-decode";
 import { useForm, Controller } from "react-hook-form";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
@@ -12,6 +13,14 @@ import { useNavigate } from "react-router-dom";
 import CustomSelect from "./CustomSelect";
 import { PulseLoader } from "react-spinners";
 import Swal from "sweetalert2/dist/sweetalert2.js";
+
+const typeOptions = [
+  { value: "H", label: "Hadir" },
+  { value: "C", label: "Cuti" },
+  { value: "S", label: "Sakit" },
+  { value: "I", label: "Izin" },
+  { value: "L", label: "Libur / Cuti Bersama" },
+];
 
 const AddTimesheetForm = () => {
   const {
@@ -36,11 +45,32 @@ const AddTimesheetForm = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const navigate = useNavigate();
 
+  const divisionOptions = useMemo(
+    () => divisions.map((d) => ({ value: d._id, label: d.name })),
+    [divisions]
+  );
+  const departmentOptions = useMemo(
+    () => departments.map((d) => ({ value: d._id, label: d.name })),
+    [departments]
+  );
+  const teamOptions = useMemo(
+    () => teams.map((t) => ({ value: t._id, label: t.name })),
+    [teams]
+  );
+  const vendorOptions = useMemo(
+    () => vendors.map((v) => ({ value: v._id, label: v.name })),
+    [vendors]
+  );
+
   useEffect(() => {
     const token = localStorage.getItem("token");
     if (token) {
-      const decodedToken = JSON.parse(atob(token.split(".")[1]));
-      setTokenData(decodedToken);
+      try {
+        const decodedToken = jwtDecode(token);
+        setTokenData(decodedToken);
+      } catch (e) {
+        // invalid token, leave tokenData as null
+      }
     }
   }, []);
 
@@ -82,11 +112,9 @@ const AddTimesheetForm = () => {
     fetchDropdownData();
   }, []);
 
-  useEffect(() => {}, [activities]);
-
-  const addActivity = () => {
-    setActivities([
-      ...activities,
+  const addActivity = useCallback(() => {
+    setActivities((prev) => [
+      ...prev,
       {
         date: "",
         clockIn: "",
@@ -96,7 +124,7 @@ const AddTimesheetForm = () => {
         activities: "",
       },
     ]);
-  };
+  }, []);
 
   const onSubmit = async (data) => {
     setIsSubmitting(true);
@@ -105,8 +133,6 @@ const AddTimesheetForm = () => {
         ...data,
         activities: data.activities.map(({ type, ...rest }) => rest), // Hapus field `type`
       };
-      console.log(filteredData);
-
       const token = localStorage.getItem("token");
 
       await axios.post(
@@ -131,55 +157,51 @@ const AddTimesheetForm = () => {
     }
   };
 
-  const typeOptions = [
-    { value: "H", label: "Hadir" },
-    { value: "C", label: "Cuti" },
-    { value: "S", label: "Sakit" },
-    { value: "I", label: "Izin" },
-    { value: "L", label: "Libur / Cuti Bersama" },
-  ];
-
-  const handleDeleteActivity = (index) => {
-    const currentActivities = watch("activities") || [];
-    const activity = currentActivities[index];
-
-    // Check if any field in the activity has data
-    const hasData =
-      activity &&
-      Object.values(activity).some(
-        (value) => value !== null && value !== undefined && value !== ""
-      );
-
-    if (hasData) {
-      Swal.fire({
-        title: "Yakin ingin menghapus?",
-        text: "Data yang sudah diisi akan hilang.",
-        icon: "warning",
-        showCancelButton: true,
-        confirmButtonColor: "#d33",
-        cancelButtonColor: "#3085d6",
-        confirmButtonText: "Ya, hapus!",
-        cancelButtonText: "Batal",
-      }).then((result) => {
-        if (result.isConfirmed) {
-          removeActivity(index);
-        }
+  const removeActivity = useCallback(
+    (index) => {
+      const currentActivities = watch("activities") || [];
+      const updatedActivities = currentActivities.filter((_, i) => i !== index);
+      setValue("activities", updatedActivities, {
+        shouldValidate: true,
+        shouldDirty: true,
       });
-    } else {
-      removeActivity(index);
-    }
-  };
+      setActivities(updatedActivities);
+    },
+    [watch, setValue]
+  );
 
-  const removeActivity = (index) => {
-    const currentActivities = watch("activities") || [];
-    const updatedActivities = currentActivities.filter((_, i) => i !== index);
+  const handleDeleteActivity = useCallback(
+    (index) => {
+      const currentActivities = watch("activities") || [];
+      const activity = currentActivities[index];
 
-    setValue("activities", updatedActivities, {
-      shouldValidate: true,
-      shouldDirty: true,
-    });
-    setActivities(updatedActivities);
-  };
+      const hasData =
+        activity &&
+        Object.values(activity).some(
+          (value) => value !== null && value !== undefined && value !== ""
+        );
+
+      if (hasData) {
+        Swal.fire({
+          title: "Yakin ingin menghapus?",
+          text: "Data yang sudah diisi akan hilang.",
+          icon: "warning",
+          showCancelButton: true,
+          confirmButtonColor: "#d33",
+          cancelButtonColor: "#3085d6",
+          confirmButtonText: "Ya, hapus!",
+          cancelButtonText: "Batal",
+        }).then((result) => {
+          if (result.isConfirmed) {
+            removeActivity(index);
+          }
+        });
+      } else {
+        removeActivity(index);
+      }
+    },
+    [watch, removeActivity]
+  );
 
   return (
     <Card extra={"w-full h-full px-6 pb-6 sm:overflow-x-auto"}>
@@ -227,10 +249,7 @@ const AddTimesheetForm = () => {
                 </label>
                 <CustomSelect
                   name="divisi"
-                  options={divisions.map((d) => ({
-                    value: d._id,
-                    label: d.name,
-                  }))}
+                  options={divisionOptions}
                   isLoading={isLoading}
                   control={control}
                   defaultValue=""
@@ -249,10 +268,7 @@ const AddTimesheetForm = () => {
                 </label>
                 <CustomSelect
                   name="department"
-                  options={departments.map((d) => ({
-                    value: d._id,
-                    label: d.name,
-                  }))}
+                  options={departmentOptions}
                   isLoading={isLoading}
                   control={control}
                   defaultValue=""
@@ -271,7 +287,7 @@ const AddTimesheetForm = () => {
                 </label>
                 <CustomSelect
                   name="team"
-                  options={teams.map((t) => ({ value: t._id, label: t.name }))}
+                  options={teamOptions}
                   isLoading={isLoading}
                   control={control}
                   defaultValue=""
@@ -288,10 +304,7 @@ const AddTimesheetForm = () => {
                 </label>
                 <CustomSelect
                   name="vendor"
-                  options={vendors.map((v) => ({
-                    value: v._id,
-                    label: v.name,
-                  }))}
+                  options={vendorOptions}
                   isLoading={isLoading}
                   control={control}
                   defaultValue={tokenData?.vendor || ""}
