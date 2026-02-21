@@ -9,8 +9,6 @@ import {
 } from "@tanstack/react-table";
 import axios from "axios";
 import { Download, Plus, Eye, Edit, Trash, FileText } from "lucide-react";
-import jsPDF from "jspdf";
-import autoTable from "jspdf-autotable";
 import { toast } from "react-toastify";
 import Card from "components/card";
 import { useNavigate } from "react-router-dom";
@@ -317,122 +315,26 @@ const TimesheetList = () => {
       const token = localStorage.getItem("token");
 
       const response = await axios.get(
-        `${process.env.REACT_APP_URL_API}/api/timesheet/${rowData}`,
+        `${process.env.REACT_APP_URL_API}/api/timesheet/download-pdf/${rowData}`,
         {
           headers: {
             Authorization: `Bearer ${token}`,
           },
+          responseType: "blob",
         }
       );
 
-      const timesheet = response.data;
+      const blob = new Blob([response.data], { type: "application/pdf" });
+      const url = window.URL.createObjectURL(blob);
 
-      const monthNames = [
-        "January", "February", "March", "April", "May", "June",
-        "July", "August", "September", "October", "November", "December",
-      ];
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `Timesheet_${rowData}.pdf`;
+      document.body.appendChild(a);
+      a.click();
 
-      const typeLabels = {
-        H: "Hadir",
-        C: "Cuti",
-        S: "Sakit",
-        I: "Izin",
-        L: "Libur",
-        LS: "Sabtu",
-        LM: "Minggu",
-      };
-
-      const doc = new jsPDF({ orientation: "landscape" });
-
-      // Title
-      doc.setFontSize(16);
-      doc.setFont("helvetica", "bold");
-      doc.text("TIMESHEET", doc.internal.pageSize.getWidth() / 2, 16, {
-        align: "center",
-      });
-
-      // Info header
-      doc.setFontSize(10);
-      doc.setFont("helvetica", "normal");
-
-      const period = `${monthNames[(timesheet.month || 1) - 1]} ${timesheet.year}`;
-      const infoLines = [
-        [`Vendor`, `: ${timesheet.vendor?.name || "-"}`],
-        [`Division`, `: ${timesheet.divisi?.name || "-"}`],
-        [`Department`, `: ${timesheet.department?.name || "-"}`],
-        [`Team`, `: ${timesheet.team?.name || "-"}`],
-        [`Period`, `: ${period}`],
-      ];
-
-      let startY = 24;
-      infoLines.forEach(([label, value]) => {
-        doc.setFont("helvetica", "bold");
-        doc.text(label, 14, startY);
-        doc.setFont("helvetica", "normal");
-        doc.text(value, 50, startY);
-        startY += 6;
-      });
-
-      // Activities table
-      const activities = timesheet.activities || [];
-      const tableBody = activities.map((act, idx) => {
-        const dateStr = act.date
-          ? new Date(act.date).toLocaleDateString("id-ID", {
-              day: "2-digit",
-              month: "long",
-              year: "numeric",
-            })
-          : "-";
-        const isWork = act.type === "H";
-        return [
-          idx + 1,
-          dateStr,
-          typeLabels[act.type] || act.type || "-",
-          isWork ? act.clockIn || "-" : "-",
-          isWork ? act.clockOut || "-" : "-",
-          isWork ? act.project || "-" : "-",
-          isWork ? act.projectCode || "-" : "-",
-          act.type === "H" || act.type === "L"
-            ? act.activities || "-"
-            : "-",
-        ];
-      });
-
-      autoTable(doc, {
-        startY: startY + 2,
-        head: [
-          [
-            "No",
-            "Date",
-            "Type",
-            "Clock In",
-            "Clock Out",
-            "Project",
-            "Project Code",
-            "Activities",
-          ],
-        ],
-        body: tableBody,
-        styles: { fontSize: 8, cellPadding: 2 },
-        headStyles: {
-          fillColor: [99, 102, 241],
-          textColor: 255,
-          fontStyle: "bold",
-        },
-        alternateRowStyles: { fillColor: [245, 245, 255] },
-        columnStyles: {
-          0: { cellWidth: 10 },
-          1: { cellWidth: 35 },
-          2: { cellWidth: 20 },
-          3: { cellWidth: 18 },
-          4: { cellWidth: 18 },
-          5: { cellWidth: 35 },
-          6: { cellWidth: 25 },
-          7: { cellWidth: "auto" },
-        },
-      });
-
-      doc.save(`Timesheet_${period.replace(" ", "_")}_${rowData}.pdf`);
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
 
       setShowConfetti(true);
 
