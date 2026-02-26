@@ -477,6 +477,13 @@ const EditTimesheet = () => {
                                       ).toISOString()
                                     : null;
                                   field.onChange(formattedDate);
+                                  // Auto-set type to L (Libur) for Saturday/Sunday
+                                  if (date) {
+                                    const dow = date.getDay();
+                                    if (dow === 0 || dow === 6) {
+                                      setValue(`activities[${index}].type`, "L");
+                                    }
+                                  }
                                 }}
                                 dateFormat="yyyy-MM-dd"
                                 placeholderText="Select Date"
