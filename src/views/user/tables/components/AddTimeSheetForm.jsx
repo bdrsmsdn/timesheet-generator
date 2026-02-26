@@ -116,11 +116,13 @@ const AddTimesheetForm = () => {
     setActivities((prev) => [
       ...prev,
       {
+        type: "H",
         date: "",
         clockIn: "",
         clockOut: "",
         project: "",
         projectCode: "",
+        aipFitur: "",
         activities: "",
       },
     ]);
@@ -129,15 +131,11 @@ const AddTimesheetForm = () => {
   const onSubmit = async (data) => {
     setIsSubmitting(true);
     try {
-      const filteredData = {
-        ...data,
-        activities: data.activities.map(({ type, ...rest }) => rest), // Hapus field `type`
-      };
       const token = localStorage.getItem("token");
 
       await axios.post(
         `${process.env.REACT_APP_URL_API}/api/timesheet`,
-        filteredData,
+        data,
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -359,10 +357,9 @@ const AddTimesheetForm = () => {
           <Tab.Panel>
             <div className="space-y-4">
               {activities.map((activity, index) => {
+                // Only H (Hadir) is a work type; L = Libur/Cuti Bersama (no clock/project/activities)
                 const isDisabled = watch(`activities[${index}].type`) !== "H";
-                const isDisabledLibur = !["H", "L"].includes(
-                  watch(`activities[${index}].type`)
-                );
+                const isDisabledLibur = isDisabled;
 
                 return (
                   <div
@@ -533,6 +530,30 @@ const AddTimesheetForm = () => {
                           />
                         </div>
                       </div>
+                    </div>
+
+                    {/* AIP Fitur */}
+                    <div className="mb-4">
+                      <label className="block text-sm font-medium text-gray-700 dark:text-white">
+                        AIP Fitur
+                      </label>
+                      <Controller
+                        name={`activities[${index}].aipFitur`}
+                        control={control}
+                        render={({ field }) => (
+                          <input
+                            {...field}
+                            type="text"
+                            className={`w-full rounded border p-2 dark:border-gray-700 dark:bg-navy-800 dark:text-white dark:placeholder-gray-400 ${
+                              isDisabled
+                                ? "cursor-not-allowed bg-gray-100 dark:bg-navy-800 dark:text-gray-400"
+                                : ""
+                            }`}
+                            placeholder="Enter AIP Fitur"
+                            disabled={isDisabled}
+                          />
+                        )}
+                      />
                     </div>
 
                     {/* Activities */}

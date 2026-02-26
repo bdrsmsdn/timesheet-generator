@@ -7,7 +7,7 @@ import axios from "axios";
 import Slider from "react-slick";
 import "slick-carousel/slick/slick.css";
 import "slick-carousel/slick/slick-theme.css";
-import { Rin, PulseLoader } from "react-spinners";
+import { PulseLoader } from "react-spinners";
 
 const TimesheetView = () => {
   const { id } = useParams();
@@ -55,18 +55,11 @@ const TimesheetView = () => {
   };
 
   const typeMapping = {
-    LS: "Libur",
-    LM: "Libur",
     H: "Hadir",
     C: "Cuti",
     S: "Sakit",
     I: "Izin",
-    L: "Libur",
-  };
-
-  const typeLibur = {
-    LS: "Sabtu",
-    LM: "Minggu",
+    L: "Libur / Cuti Bersama",
   };
 
   if (loading) {
@@ -225,12 +218,18 @@ const TimesheetView = () => {
                     </div>
                     <div className="sm:col-span-2 lg:col-span-4">
                       <label className="block text-sm font-medium text-gray-600">
+                        AIP Fitur
+                      </label>
+                      <p className="mt-1 text-navy-700 dark:text-white">
+                        {activity.aipFitur || "N/A"}
+                      </p>
+                    </div>
+                    <div className="sm:col-span-2 lg:col-span-4">
+                      <label className="block text-sm font-medium text-gray-600">
                         Activities
                       </label>
                       <p className="mt-1 text-navy-700 dark:text-white">
-                        {activity.type === "LS" || activity.type === "LM"
-                          ? typeLibur[activity.type]
-                          : activity.activities || "N/A"}
+                        {activity.activities || "N/A"}
                       </p>
                     </div>
                   </div>

@@ -22,10 +22,6 @@ const typeOptions = [
   { value: "L", label: "Libur / Cuti Bersama" },
 ];
 
-const typeMapping = {
-  LS: "Sabtu",
-  LM: "Minggu",
-};
 
 const EditTimesheet = () => {
   const { id } = useParams();
@@ -114,6 +110,7 @@ const EditTimesheet = () => {
             clockOut: activity.clockOut,
             project: activity.project,
             projectCode: activity.projectCode,
+            aipFitur: activity.aipFitur || "",
             activities: activity.activities,
           })),
         });
@@ -201,12 +198,13 @@ const EditTimesheet = () => {
     setValue("activities", [
       ...currentActivities,
       {
-        type: "",
+        type: "H",
         date: null,
         clockIn: "",
         clockOut: "",
         project: "",
         projectCode: "",
+        aipFitur: "",
         activities: "",
       },
     ]);
@@ -412,13 +410,10 @@ const EditTimesheet = () => {
           <Tab.Panel>
             <div className="space-y-4">
               {watch("activities").map((activity, index) => {
-                const isDisabled = watch(`activities[${index}].type`) !== "H";
-                const isDisabledLibur = !["H", "L"].includes(
-                  watch(`activities[${index}].type`)
-                );
-
+                // Only H (Hadir) is a work type; L = Libur/Cuti Bersama (no clock/project/activities)
                 const selectedType = watch(`activities[${index}].type`);
-                const isDisabledLSLM = ["LS", "LM"].includes(selectedType);
+                const isDisabled = selectedType !== "H";
+                const isDisabledLibur = isDisabled;
 
                 return (
                   <div
@@ -447,17 +442,9 @@ const EditTimesheet = () => {
                             {...field}
                             options={typeOptions}
                             placeholder="Select Type"
-                            value={
-                              typeMapping[selectedType]
-                                ? {
-                                    label: typeMapping[selectedType],
-                                    value: selectedType,
-                                  }
-                                : typeOptions.find(
-                                    (option) => option.value === field.value
-                                  )
-                            }
-                            isDisabled={isDisabledLSLM}
+                            value={typeOptions.find(
+                              (option) => option.value === field.value
+                            )}
                             onChange={(selectedOption) =>
                               field.onChange(selectedOption?.value)
                             }
@@ -493,12 +480,7 @@ const EditTimesheet = () => {
                                 }}
                                 dateFormat="yyyy-MM-dd"
                                 placeholderText="Select Date"
-                                className={`dark:bg-navy-800, w-full rounded border p-2 dark:border-gray-700 ${
-                                  isDisabledLSLM
-                                    ? "cursor-not-allowed bg-gray-200 text-gray-500 dark:bg-gray-500"
-                                    : ""
-                                }`}
-                                disabled={isDisabledLSLM}
+                                className="dark:bg-navy-800 w-full rounded border p-2 dark:border-gray-700"
                               />
                             )}
                           />
@@ -600,6 +582,30 @@ const EditTimesheet = () => {
                         </div>
                       </div>
                     </div>
+                    {/* AIP Fitur */}
+                    <div className="mb-4">
+                      <label className="block text-sm font-medium text-gray-700 dark:text-white">
+                        AIP Fitur
+                      </label>
+                      <Controller
+                        name={`activities[${index}].aipFitur`}
+                        control={control}
+                        render={({ field }) => (
+                          <input
+                            {...field}
+                            type="text"
+                            className={`w-full rounded border p-2 dark:border-gray-700 dark:bg-navy-800 dark:text-white dark:placeholder-gray-400 ${
+                              isDisabled
+                                ? "cursor-not-allowed bg-gray-100 dark:bg-navy-800 dark:text-gray-400"
+                                : ""
+                            }`}
+                            placeholder="Enter AIP Fitur"
+                            disabled={isDisabled}
+                          />
+                        )}
+                      />
+                    </div>
+
                     {/* Activities */}
                     <div>
                       <label className="block text-sm font-medium text-gray-700 dark:text-white">
