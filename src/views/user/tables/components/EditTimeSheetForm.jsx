@@ -12,7 +12,6 @@ import { useNavigate, useParams } from "react-router-dom";
 import CustomSelect from "./CustomSelect";
 import { PulseLoader } from "react-spinners";
 import Swal from "sweetalert2/dist/sweetalert2";
-import { MdSignLanguage } from "react-icons/md";
 
 const typeOptions = [
   { value: "H", label: "Hadir" },

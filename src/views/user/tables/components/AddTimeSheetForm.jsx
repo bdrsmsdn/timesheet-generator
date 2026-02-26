@@ -27,7 +27,6 @@ const AddTimesheetForm = () => {
     control,
     handleSubmit,
     setValue,
-    register,
     watch,
     reset,
     formState: { errors },

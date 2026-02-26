@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
-import { useParams, useNavigate, useLocation } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 import Card from "components/card";
-import { ArrowLeft, ArrowRight, Edit, Trash2 } from "lucide-react";
+import { ArrowLeft } from "lucide-react";
 import { toast } from "react-toastify";
 import axios from "axios";
 import Slider from "react-slick";
